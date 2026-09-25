@@ -7,36 +7,59 @@ import Form from "./Form";
 function MyApp() {
   const [characters, setCharacters] = useState([]);
 
-  function removeOneCharacter(index) {
-    const updated = characters.filter((character, i) => {
-      return i !== index;
+  function removeOneCharacter(id) {
+  fetch(`http://localhost:8000/users/${id}`, {
+    method: "DELETE",
+  })
+    .then((response) => {
+      if (response.status === 204) {
+        const updated = characters.filter(
+          (character) => character.id !== id,
+        );
+
+        setCharacters(updated);
+      } else if (response.status === 404) {
+        console.log("User was not found.");
+      } else {
+        console.log("User was not deleted. Status:", response.status);
+      }
+    })
+    .catch((error) => {
+      console.log(error);
     });
-    setCharacters(updated);
-  }
+}
 
   function updateList(person) {
     postUser(person)
-      .then(() => setCharacters([...characters, person]))
+      .then((response) => {
+        if (response.status === 201) {
+          return response.json();
+        } else {
+          console.log("User was not created. Status:", response.status);
+        }
+      })
+      .then((newUser) => {
+        if (newUser) {
+          setCharacters([...characters, newUser]);
+        }
+      })
       .catch((error) => {
         console.log(error);
       });
   }
 
   function fetchUsers() {
-    const promise = fetch("http://localhost:8000/users");
-    return promise;
+    return fetch("http://localhost:8000/users");
   }
 
   function postUser(person) {
-    const promise = fetch("Http://localhost:8000/users", {
+    return fetch("http://localhost:8000/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(person),
     });
-
-    return promise;
   }
 
   useEffect(() => {
