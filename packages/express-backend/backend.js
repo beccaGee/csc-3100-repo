@@ -9,24 +9,13 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Hello EVERYONE!");
 });
-
-const findUserByName = (name) => {
-  return users["users_list"].filter((user) => user["name"] === name);
-};
-
-const findUserByNameAndJob = (name, job) => {
-  return users["users_list"].filter(
-    (user) => user["name"] === name && user["job"] === job,
-  );
-};
 
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job;
-
-  if (name != undefined && job != undefined) {
+  if (name != undefined && job !== undefined) {
     let result = findUserByNameAndJob(name, job);
     result = { users_list: result };
     res.send(result);
@@ -52,40 +41,63 @@ app.get("/users/:id", (req, res) => {
   }
 });
 
+app.delete("/users/:id", (req, res) => {
+  const id = req.params["id"];
+
+  const findUserIndex = users.users_list.findIndex((user) => user.id === id);
+
+  if (findUserIndex === -1) {
+    res.status(404).send("Resource not Found.");
+    return;
+  }
+
+  users.users_list.splice(findUserIndex, 1);
+
+  res.status(204).send();
+});
+
 const addUser = (user) => {
   users["users_list"].push(user);
   return user;
 };
 
+function generateId() {
+  const alph = "abcdefghijklmnopqrstuvwxyz";
+  const letters =
+    alph[Math.floor(Math.random() * 26)] +
+    alph[Math.floor(Math.random() * 26)] +
+    alph[Math.floor(Math.random() * 26)];
+
+  const nums = Math.floor(100 + Math.random() * 900);
+
+  return `${letters}${nums}`;
+}
+
 app.post("/users", (req, res) => {
-  const userToAdd = req.body;
+  const userToAdd = {
+    id: generateId(),
+    name: req.body.name,
+    job: req.body.job,
+  };
+
   addUser(userToAdd);
-  res.send();
-});
 
-const delUserID = (id) => {
-  const userToDel = users["users_list"].findIndex((user) => user["id"] === id);
-  if (userToDel === -1) {
-    return undefined;
-  }
-
-  const deletedUser = users["users_list"].splice(userToDel, 1)[0];
-  return deletedUser;
-};
-
-app.delete("/users/:id", (req, res) => {
-  const id = req.params["id"]; //or req.params.id
-  let result = delUserID(id);
-  if (result === undefined) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.send(result);
-  }
+  res.status(201).set("Location", `/users/${userToAdd.id}`).send(userToAdd);
 });
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
+
+const findUserByNameAndJob = (name, job) => {
+  return users["users_list"].filter(
+    (user) => user["name"] === name && user.job === job,
+  );
+};
+
+const findUserByName = (name) => {
+  return users["users_list"].filter((user) => user["name"] === name);
+};
 
 const users = {
   users_list: [
