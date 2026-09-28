@@ -7,14 +7,14 @@ import Form from "./Form";
 function MyApp() {
   const [characters, setCharacters] = useState([]);
 
-  function removeOneCharacter(id) {
-  fetch(`http://localhost:8000/users/${id}`, {
+  function removeOneCharacter(_id) {
+  fetch(`http://localhost:8000/users/${_id}`, {
     method: "DELETE",
   })
     .then((response) => {
       if (response.status === 204) {
         const updated = characters.filter(
-          (character) => character.id !== id,
+          (character) => character._id !== _id,
         );
 
         setCharacters(updated);
